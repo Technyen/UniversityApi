@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UniversityApi.Data;
 using UniversityApi.Models;
+using UniversityApi.Services;
 
 namespace UniversityApi.Controllers
 {
@@ -15,31 +15,52 @@ namespace UniversityApi.Controllers
     public class StudentsController : ControllerBase
     {
         private readonly SchoolContext _context;
+        private readonly Service _service;
 
-        public StudentsController(SchoolContext context)
+        public StudentsController(SchoolContext context, Service service)
         {
             _context = context;
+            _service = service;
         }
 
         // GET: api/Students
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Student>>> GetStudents()
         {
-          if (_context.Students == null)
-          {
-              return NotFound();
-          }
+            if (_context.Students == null)
+            {
+                return NotFound();
+            }
             return await _context.Students.ToListAsync();
+        }
+        //GETStudentsByEmail
+        [HttpGet("{emial}")]
+        public ActionResult<IEnumerable<Student>> GetStudentsByEmail(string email)
+        {
+            try
+            {
+                var students = _service.GetStudentsByEmail(email).ToList();
+                if (students == null)
+                {
+                    return NotFound("No students were found for the specified age.");
+                }
+                return students;
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
+
         }
 
         // GET: api/Students/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Student>> GetStudent(int id)
+        public async Task<ActionResult<Student>> GetStudent(long id)
         {
-          if (_context.Students == null)
-          {
-              return NotFound();
-          }
+            if (_context.Students == null)
+            {
+                return NotFound();
+            }
             var student = await _context.Students.FindAsync(id);
 
             if (student == null)
@@ -53,9 +74,9 @@ namespace UniversityApi.Controllers
         // PUT: api/Students/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutStudent(int id, Student student)
+        public async Task<IActionResult> PutStudent(long id, Student student)
         {
-            if (id != student.ID)
+            if (id != student.Id)
             {
                 return BadRequest();
             }
@@ -86,19 +107,19 @@ namespace UniversityApi.Controllers
         [HttpPost]
         public async Task<ActionResult<Student>> PostStudent(Student student)
         {
-          if (_context.Students == null)
-          {
-              return Problem("Entity set 'SchoolContext.Students'  is null.");
-          }
+            if (_context.Students == null)
+            {
+                return Problem("Entity set 'SchoolContext.Students'  is null.");
+            }
             _context.Students.Add(student);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetStudent", new { id = student.ID }, student);
+            return CreatedAtAction("GetStudent", new { id = student.Id }, student);
         }
 
         // DELETE: api/Students/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteStudent(int id)
+        public async Task<IActionResult> DeleteStudent(long id)
         {
             if (_context.Students == null)
             {
@@ -116,9 +137,9 @@ namespace UniversityApi.Controllers
             return NoContent();
         }
 
-        private bool StudentExists(int id)
+        private bool StudentExists(long id)
         {
-            return (_context.Students?.Any(e => e.ID == id)).GetValueOrDefault();
+            return (_context.Students?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

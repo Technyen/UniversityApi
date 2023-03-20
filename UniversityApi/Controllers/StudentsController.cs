@@ -34,7 +34,7 @@ namespace UniversityApi.Controllers
             return await _context.Students.ToListAsync();
         }
         //GETStudentsByEmail
-        [HttpGet("{emial}")]
+        [HttpGet("{email}")]
         public ActionResult<IEnumerable<Student>> GetStudentsByEmail(string email)
         {
             try
